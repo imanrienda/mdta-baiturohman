@@ -1,106 +1,127 @@
-<style>
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Data Nilai Siswa</title>
 
-    table,
-    td,
-    th {
-        border: 1px solid black;
-    }
+    <style>
+        body{
+            font-family: sans-serif;
+            font-size: 12px;
+        }
 
-    td,
-    th {
-        padding: 10px;
-    }
-</style>
+        table{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
 
-<center>
-    <h3>Nilai</h3>
-</center>
+        table, th, td{
+            border: 1px solid black;
+        }
 
+        th, td{
+            padding: 8px;
+            text-align: center;
+        }
 
-<p>Nama : {{$student->student->nama}}</p>
-<p>NIS : {{$student->student->nis}}</p>
-<p>Kelas : {{$student->classRoom->nama}}</p>
-<p>Semester : {{ $student->semester->tahun_ajaran .' | '. $student->semester->semester}}</p>
+        .text-left{
+            text-align: left;
+        }
 
-<table>
-    <thead>
-        <tr>
-            <th width="5%">No</th>
-            <th>Mata Pelajaran</th>
-            <th>Nilai Tugas 1</th>
-            <th>Nilai Tugas 2</th>
-            <th>Nilai UTS</th>
-            <th>Nilai UAS</th>
-            <th>Nilai Rata2</th>
-        </tr>
-    </thead>
+        h2, h4{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
 
-    <tbody>
-        {{-- @php
-        $sum = 0;
-        @endphp --}}
-        @foreach ($nilai->unique('subject_id') as $grade)
-        {{-- @php
-        $jmltugas = $grade->nilai_tugas_1 + $grade->nilai_tugas_2;
-        $rata2tugas = $jmltugas / 2;
+    <center>
+        <h2>LAPORAN NILAI SISWA</h2>
+        <h4>
+            Semester :
+            {{ $semester->tahun_ajaran ?? '-' }}
+            |
+            {{ $semester->semester ?? '-' }}
+        </h4>
+    </center>
 
-        $tugas = $rata2tugas * 0.25;
-        $uts = $grade->nilai_uts * 0.35;
-        $uas = $grade->nilai_uas * 0.40;
-        $rata2 = $tugas + $uts + $uas;
+    <br>
 
-        $sum += $rata2
-        @endphp --}}
-        <tr>
-            <td>{{ $loop->iteration }}</td>
-            <td>
-                {{ isset($grade->nama) ? ucfirst($grade->nama) :
-                        'no name!' }}
-            </td>
-            <td>
-                {{ isset( $grade->nilai_tugas_1) ?  ucfirst($grade->nilai_tugas_1)  : '-' }}
-            </td>
-            <td>
-                {{ isset($grade->nilai_tugas_2) ?  ucfirst($grade->nilai_tugas_2)  : '-' }}
-            </td>
-            <td>
-                {{ isset($grade->nilai_uts) ?  ucfirst($grade->nilai_uts)  : '-' }}
-            </td>
-            <td>
-                {{ isset($grade->nilai_uas) ?  ucfirst($grade->nilai_uas)  : '-' }}
-            </td>
-            <td>
-                {{ (round($grade->rata2,2)) ? (round($grade->rata2,2))  : '-' }}
-            </td>
-        </tr>
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th class="text-left">Mata Pelajaran</th>
+                <th>Tugas 1</th>
+                <th>Tugas 2</th>
+                <th>UTS</th>
+                <th>UAS</th>
+                <th>Rata-rata</th>
+            </tr>
+        </thead>
 
-        @endforeach
-        <tr>
-            <td colspan="6" class="text-center text-bold">Rata-rata</td>
-            <td>
-                {{ (round($total, 2)) ? (round($total, 2))  : '-'  }}
-            </td>
-        </tr>
-        {{-- @php
-        $ss = \App\Grade::where('class_student_id',$student->id)->where('semester_id',
-        $semester)->get();
+        <tbody>
 
-        $jm = count($ss);
-        @endphp
-        @php
-        $jumlahData = count($nilai->unique('subject_id'));
-        @endphp
-        @if($ss->isNotEmpty())
-        <tr>
-            <td colspan="6" class="text-center text-bold">Rata-rata</td>
-            <td>
-                {{ (round($sum / $jm, 2)) ? (round($sum / $jm, 2))  : '-'  }}
-        </td>
-        </tr>
-        @endif --}}
-    </tbody>
-</table>
+            @php
+                $total = 0;
+                $jumlah = 0;
+            @endphp
+
+            @foreach($grades as $grade)
+
+                @php
+
+                    $rata2Tugas =
+                        (($grade->nilai_tugas_1 ?? 0) +
+                        ($grade->nilai_tugas_2 ?? 0)) / 2;
+
+                    $rata2 =
+                        ($rata2Tugas * 0.25) +
+                        (($grade->nilai_uts ?? 0) * 0.35) +
+                        (($grade->nilai_uas ?? 0) * 0.40);
+
+                    $total += $rata2;
+                    $jumlah++;
+
+                @endphp
+
+                <tr>
+                    <td>{{ $loop->iteration }}</td>
+
+                    <td class="text-left">
+                        {{ $grade->subject->nama ?? '-' }}
+                    </td>
+
+                    <td>{{ $grade->nilai_tugas_1 ?? '-' }}</td>
+                    <td>{{ $grade->nilai_tugas_2 ?? '-' }}</td>
+                    <td>{{ $grade->nilai_uts ?? '-' }}</td>
+                    <td>{{ $grade->nilai_uas ?? '-' }}</td>
+
+                    <td>
+                        {{ number_format($rata2, 2) }}
+                    </td>
+                </tr>
+
+            @endforeach
+
+            <tr>
+                <th colspan="6">
+                    Rata-rata Keseluruhan
+                </th>
+
+                <th>
+                    {{
+                        $jumlah > 0
+                        ? number_format($total / $jumlah, 2)
+                        : '0'
+                    }}
+                </th>
+            </tr>
+
+        </tbody>
+    </table>
+
+</body>
+</html>

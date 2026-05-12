@@ -7,61 +7,118 @@
 
 <div class="row">
    <div class="col-lg">
+
+      {{-- FILTER --}}
       <form action="/grades" method="get">
          <div class="row">
+
             <div class="col-auto">
                <div class="form-group">
                   <select name="kelas" id="kelas" class="form-control" required>
                      <option value="">Pilih kelas</option>
+
                      @foreach ($classes as $class)
-                     <option value="{{$class->id}}" {{ ($_GET) ? $_GET['kelas'] == $class->id ? 'selected' : '' : '' }}>
-                        {{ $class->nama }}</option>
+
+                     <option
+                        value="{{ $class->id }}"
+                        {{ request('kelas') == $class->id ? 'selected' : '' }}>
+
+                        {{ $class->nama }}
+
+                     </option>
+
                      @endforeach
+
                   </select>
                </div>
             </div>
+
             <div class="col-auto">
                <div class="form-group">
                   <select name="semester" id="semester" class="form-control" required>
+
                      <option value="">Pilih semester</option>
+
                      @foreach ($semesters as $semester)
-                     <option value="{{$semester->id}}"
-                        {{ ($_GET) ? $_GET['semester'] == $semester->id ? 'selected' : '' : '' }}>
-                        {{ $semester->tahun_ajaran .' | '. $semester->semester }}
+
+                     <option
+                        value="{{ $semester->id }}"
+                        {{ request('semester') == $semester->id ? 'selected' : '' }}>
+
+                        {{ $semester->tahun_ajaran . ' | ' . $semester->semester }}
+
                      </option>
+
                      @endforeach
+
                   </select>
                </div>
             </div>
+
             <div class="col-auto">
-               <button type="submit" class="btn btn-success">Tampilkan</button>
+               <button type="submit" class="btn btn-success">
+                  Tampilkan
+               </button>
             </div>
+
          </div>
       </form>
 
-      @if(isset($_GET['kelas']))
+      {{-- HASIL --}}
+      @if(request()->filled('kelas') && request()->filled('semester'))
 
-      <div class="card">
+      <div class="card mt-3">
+
          <div class="card-header">
+
             <div class="card-title">
-               Data Nilai Kelas {{$grades[0]->classStudent->classRoom->nama}} Semester
-               {{$grades[0]->semester->tahun_ajaran .' | '. $grades[0]->semester->semester }}
-               {{-- {{$grades[0]->classLearn->semester->tahun_ajaran .' | '. $grades[0]->classLearn->semester->semester   }}
-               --}}
+
+               @if($grades->isNotEmpty())
+
+                  Data Nilai
+                  Kelas
+                  {{ optional(optional($grades->first()->classStudent)->classRoom)->nama ?? '-' }}
+
+                  Semester
+                  {{ optional($grades->first()->semester)->tahun_ajaran ?? '-' }}
+                  |
+                  {{ optional($grades->first()->semester)->semester ?? '-' }}
+
+               @else
+
+                  Data Nilai
+
+               @endif
 
             </div>
+
          </div>
 
          <div class="card-body">
 
-            <a href="/grades/{{ $_GET['kelas'] }}/{{ $_GET['semester'] }}/create"
-               class="btn btn-primary btn-sm mb-3">Tambah Nilai</a>
-            <a href="export-nilai/{{ $_GET['kelas'] }}/{{ $_GET['semester'] }}" class="btn btn-info btn-sm mb-3">Export
-               PDF</a>
+            {{-- BUTTON --}}
+            <a
+               href="/grades/{{ request('kelas') }}/{{ request('semester') }}/create"
+               class="btn btn-primary btn-sm mb-3">
 
+               Tambah Nilai
+
+            </a>
+
+            <a
+               href="/export-nilai/{{ request('kelas') }}/{{ request('semester') }}"
+               class="btn btn-info btn-sm mb-3">
+
+               Export PDF
+
+            </a>
+
+            {{-- TABEL --}}
             @if($grades->isNotEmpty())
-            <table class="table" id="datatable">
-               <thead>
+
+            <table class="table table-bordered table-hover" id="datatable">
+
+               <thead class="thead-light">
                   <tr>
                      <th>No</th>
                      <th>Nama</th>
@@ -70,168 +127,157 @@
                      <th>Nilai Tugas 2</th>
                      <th>Nilai UTS</th>
                      <th>Nilai UAS</th>
-                     {{-- <th>Guru</th> --}}
-                     <th>Rata2</th>
+                     <th>Rata-rata</th>
                      <th>Aksi</th>
                   </tr>
                </thead>
+
                <tbody>
 
                   @foreach ($grades as $grade)
-                  <tr>
-                     <td>{{ $loop->iteration }}</td>
-                     <td>{{ $grade->classStudent->student->nama }}</td>
-                     <td>{{ $grade->classLearn->subject->nama }}</td>
-                     <td>{{ $grade->nilai_tugas_1 }}</td>
-                     <td>{{ $grade->nilai_tugas_2 }}</td>
-                     <td>{{ $grade->nilai_uts }}</td>
-                     <td>{{ $grade->nilai_uas }}</td>
-                     {{-- <td>{{ $grade->schedule->teacher->nama }}</td> --}}
 
-                     <td>{{ round($grade->rata2, 2) }}</td>
+                  <tr>
+
                      <td>
-                        <a href="/grades/{{ $grade->id }}/edit" class="btn btn-warning btn-sm">edit</a>
-                        {{-- <form action="/grades/{{ $grade->id }}" method="post" class="d-inline delete">
-                        @csrf
-                        @method('delete')
-                        <button type="submit" class="btn btn-danger btn-sm">hapus</button>
-                        </form> --}}
+                        {{ $loop->iteration }}
                      </td>
+
+                     <td>
+                        {{ optional(optional($grade->classStudent)->student)->nama ?? '-' }}
+                     </td>
+
+                     <td>
+                        {{ optional($grade->subject)->nama ?? '-' }}
+                     </td>
+
+                     <td>
+                        {{ $grade->nilai_tugas_1 ?? '-' }}
+                     </td>
+
+                     <td>
+                        {{ $grade->nilai_tugas_2 ?? '-' }}
+                     </td>
+
+                     <td>
+                        {{ $grade->nilai_uts ?? '-' }}
+                     </td>
+
+                     <td>
+                        {{ $grade->nilai_uas ?? '-' }}
+                     </td>
+
+                     <td>
+                        {{ isset($grade->rata2) ? number_format($grade->rata2, 2) : '-' }}
+                     </td>
+
+                     <td>
+
+                        <a
+                           href="/grades/{{ $grade->id }}/edit"
+                           class="btn btn-warning btn-sm">
+
+                           Edit
+
+                        </a>
+
+                        <form
+                           action="/grades/{{ $grade->id }}"
+                           method="post"
+                           class="d-inline form-delete">
+
+                           @csrf
+                           @method('DELETE')
+
+                           <button
+                              type="submit"
+                              class="btn btn-danger btn-sm">
+
+                              Hapus
+
+                           </button>
+
+                        </form>
+
+                     </td>
+
                   </tr>
+
                   @endforeach
 
                </tbody>
+
             </table>
 
             @else
-            <div class="alert alert-danger">
-               Data nilai tidak ada
+
+            <div class="alert alert-warning">
+
+               Data nilai tidak ada untuk kelas dan semester yang dipilih.
+
             </div>
+
             @endif
 
-            @else
-            <div class="alert alert-info">
-               Untuk menampilkan nilai pilih kelas dan semester
-            </div>
-            @endif
          </div>
+
       </div>
+
+      @else
+
+      <div class="alert alert-info mt-3">
+
+         Untuk menampilkan nilai pilih kelas dan semester terlebih dahulu.
+
+      </div>
+
+      @endif
+
    </div>
 </div>
+
 @endsection
 
 @section('script')
+
 <script>
-   $(document).ready(function(){
-      $('#datatable').DataTable({
-            // kelas = $('select[name=kelas]').val();
-            // semester = $('select[name=semester]').val();
-            //     processing: true,
-            //     serverside: true,
-            //     ajax: "/getdataschedule",
-            //     columns:[
-            //         { data: 'DT_RowIndex', name: 'DT_RowIndex' },
-            //         {data: 'hari', name: 'hari'},
-            //         {data: 'jam_mulai', name: 'jam_mulai'},
-            //         {data: 'jam_selesai', name: 'jam_selesai'},
-            //         {data: 'mapel', name: 'mapel'},
-            //         {data: 'guru', name: 'guru'},
-            //         {data: 'semester', name: 'semester'},
-            //         {data: 'aksi', name: 'aksi'},
-            //     ]
+
+   $(document).ready(function () {
+
+      @if(request()->filled('kelas') &&
+         request()->filled('semester') &&
+         $grades->isNotEmpty())
+
+         $('#datatable').DataTable();
+
+      @endif
+
+
+      $('.form-delete').submit(function(e) {
+
+         e.preventDefault();
+
+         let form = this;
+
+         Swal.fire({
+            title: 'Apa kamu yakin?',
+            text: 'Data nilai akan dihapus!',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hapus!'
+         }).then((result) => {
+
+            if (result.value) {
+               form.submit();
+            }
+
+         });
+
       });
 
+   });
 
-
-        // var oTable = $('#datatable').DataTable({
-        //     processing: true,
-        //     serverSide: true,
-        //     ajax: {
-        //         url: "/getdataschedules",
-        //         type: "get",
-        //         data: function (d) {
-        //             d.kelas = $('select[name=kelas]').val();
-        //             d.semester = $('select[name=semester]').val();
-        //         }
-        //     },
-        //     columns: [
-        //         {data: 'hari', name: 'hari'},
-        //         {data: 'jam_mulai', name: 'jam_mulai'},
-        //         {data: 'jam_selesai', name: 'jam_selesai'},
-        //         {data: 'mapel', name: 'mapel'},
-        //         {data: 'guru', name: 'guru'},
-        //         {data: 'semester', name: 'semester'},
-        //         {data: 'aksi', name: 'aksi'}
-        //     ]
-        // });
-        // // jQuery.fn.preventDoubleSubmission = function() {
-        // $('#search-form').on('submit', function(e) {
-        //     $(".card-title").text('')
-        //     $(".tombol").text('')
-            
-        //     oTable.draw();
-        //     e.preventDefault();
-        //     let kelasId = $("#kelas").val()
-        //     let kelas = $("#kelas option:selected").text()
-        //     let semester = $("#semester option:selected").text()
-           
-        //     window.location.href+'?'+kelasId
-        //     $(".card-title").append(' Kelas ' + kelas + ' Semester ' + semester)
-        //     $(".tombol").append("<a href='/schedules/" + kelasId +"/create' class='btn btn-primary btn-sm mb-3'>Tambah Jadwal</a>")
-
-        // });
-        
-
-        $('#datatable').on('click', '.delete', function(e) {
-
-            e.preventDefault();
-            const form = $(this).attr('action');
-
-            Swal.fire({
-                title: 'Apa kamu yakin?',
-                text: "Data jadwal ini akan hilang!",
-                type: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Hapus!'
-            }).then((result) => {
-                if (result.value) {
-                    $('.delete').submit();
-                }
-            })
-        });
-    });
 </script>
+
 @endsection
-
-{{-- <form action="" method="post" id="search-form">
-            <div class="row">
-                <div class="col-auto">
-                    <div class="form-group">
-                        <select name="kelas" id="kelas" class="form-control custom-select">
-                            <option value="">Pilih kelas</option>
-                            @foreach ($classes as $class)
-                            <option value="{{$class->id}}"
-{{ old('kelas') == $class->id ? 'selected' : '' }}>{{ $class->nama }}</option>
-@endforeach
-</select>
-</div>
-</div>
-<div class="col-auto">
-   <div class="form-group">
-      <select name="semester" id="semester" class="form-control custom-select">
-         <option value="">Pilih semester</option>
-         @foreach ($semesters as $semester)
-         <option value="{{$semester->id}}">{{ $semester->tahun_ajaran .' | '. $semester->semester }}
-         </option>
-         @endforeach
-      </select>
-   </div>
-</div>
-<div class="col-auto">
-   <button type="submit" class="btn btn-success">Tampilkan</button>
-</div>
-</div>
-
-</form> --}}

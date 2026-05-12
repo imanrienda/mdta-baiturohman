@@ -6,37 +6,57 @@ use Illuminate\Database\Eloquent\Model;
 
 class Grade extends Model
 {
-    protected $fillable = ['class_learn_id', 'class_room_id', 'semester_id', 'class_student_id', 'student_id', 'teacher_id', 'nilai_tugas_1', 'nilai_tugas_2', 'nilai_uts', 'nilai_uas'];
+    protected $fillable = [
+        'class_student_id',
+        'subject_id',
+        'class_room_id',
+        'semester_id',
+        'teacher_id',
+        'student_id',
+        'nilai_tugas_1',
+        'nilai_tugas_2',
+        'nilai_uts',
+        'nilai_uas',
+    ];
 
-    public function classLearn()
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONSHIPS
+    |--------------------------------------------------------------------------
+    */
+
+    public function classStudent()
     {
-        return $this->belongsTo(ClassLearn::class);
+        return $this->belongsTo(\App\ClassStudent::class);
     }
 
-    public function student()
+    public function subject()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(\App\Subject::class);
     }
 
     public function teacher()
     {
-        return $this->belongsTo(Teacher::class);
+        return $this->belongsTo(\App\Teacher::class);
     }
 
     public function semester()
     {
-        return $this->belongsTo(Semester::class);
+        return $this->belongsTo(\App\Semester::class);
     }
 
-    public function classStudent()
+    public function classRoom()
     {
-        return $this->belongsTo(ClassStudent::class);
+        return $this->belongsTo(\App\ClassRoom::class);
     }
 
+    public function student()
+    {
+        return $this->belongsTo(\App\Student::class);
+    }
 
-
-    // public function schedule()
-    // {
-    //     return $this->hasMany(Schedule::class);
-    // }
+    public function classLearn()
+    {
+        return $this->belongsTo(\App\ClassLearn::class);
+    }
 }

@@ -22,93 +22,197 @@ class DashboardController extends Controller
         $guruLakiLaki  = Teacher::where('jenis_kelamin', 'Laki-laki')->count();
         $guruPerempuan = Teacher::where('jenis_kelamin', 'Perempuan')->count();
 
-        return view('user.admin.dashboard', compact('lakiLaki', 'perempuan', 'guruLakiLaki', 'guruPerempuan'));
+        return view(
+            'user.admin.dashboard',
+            compact(
+                'lakiLaki',
+                'perempuan',
+                'guruLakiLaki',
+                'guruPerempuan'
+            )
+        );
     }
 
     // -------------------------------------------------------
-    // SISWA
+    // SISWA — Dashboard
     // -------------------------------------------------------
     public function student()
-    {
-        $student_id   = auth()->user()->student->id;
-        $informations = Information::all()->take(3);
-        $classes      = \App\ClassStudent::where('student_id', $student_id)->get();
+{
+    $student_id = auth()->user()->student->id;
 
-        $nilai = DB::table('grades as g')
-            ->leftJoin('class_learns', 'g.class_learn_id', '=', 'class_learns.id')
-            ->leftJoin('semesters', 'g.semester_id', '=', 'semesters.id')
-            ->select(DB::raw('round(
-                sum( ((g.nilai_tugas_1 + g.nilai_tugas_2) / 2 * 0.25) + (g.nilai_uts * 0.35) + (g.nilai_uas * 0.40) ) / count(class_learns.subject_id), 2
-                ) as rata2, g.semester_id, class_learns.*, count(class_learns.subject_id) as jmlMapel, semesters.tahun_ajaran, semesters.semester'))
-            ->where('g.student_id', '=', $student_id)
-            ->groupBy('g.semester_id')
-            ->get();
+    // =====================================================
+    // PENGUMUMAN
+    // =====================================================
+    $informations = Information::where('publish', 1)
+        ->latest()
+        ->take(3)
+        ->get();
 
-        $semester = [];
-        $rata2    = [];
-        $jmlMapel = [];
+    // =====================================================
+    // DATA KELAS SISWA
+    // =====================================================
+    $classes = \App\ClassStudent::where(
+                    'student_id',
+                    $student_id
+                )->get();
 
-        foreach ($nilai as $grade) {
-            $semester[] = $grade->tahun_ajaran . ' | ' . $grade->semester;
-            $rata2[]    = $grade->rata2;
-            $jmlMapel[] = $grade->jmlMapel;
+    // =====================================================
+    // DATA NILAI SISWA
+    // =====================================================
+    $grades = \App\Grade::with('semester')
+                ->where('student_id', $student_id)
+                ->get();
+
+    // =====================================================
+    // GROUP BERDASARKAN SEMESTER
+    // =====================================================
+    $grouped = $grades->groupBy('semester_id');
+
+    $semester = [];
+    $rata2    = [];
+    $jmlMapel = [];
+
+    foreach ($grouped as $semesterId => $items) {
+
+        $sum = 0;
+
+        foreach ($items as $grade) {
+
+            $rata2Tugas = (
+                ($grade->nilai_tugas_1 ?? 0) +
+                ($grade->nilai_tugas_2 ?? 0)
+            ) / 2;
+
+            $nilaiAkhir =
+                ($rata2Tugas * 0.25) +
+                (($grade->nilai_uts ?? 0) * 0.35) +
+                (($grade->nilai_uas ?? 0) * 0.40);
+
+            $sum += $nilaiAkhir;
         }
 
-        return view('user.siswa.dashboard', compact('informations', 'semester', 'rata2', 'jmlMapel'));
+        $average = $items->count() > 0
+            ? round($sum / $items->count(), 2)
+            : 0;
+
+        $semesterModel = $items->first()->semester;
+
+        $semester[] =
+            $semesterModel->tahun_ajaran .
+            ' | ' .
+            $semesterModel->semester;
+
+        $rata2[] = $average;
+
+        $jmlMapel[] = $items->count();
     }
 
+    return view(
+        'user.siswa.dashboard',
+        compact(
+            'informations',
+            'semester',
+            'rata2',
+            'jmlMapel'
+        )
+    );
+}
+
+    // -------------------------------------------------------
+    // SISWA — Semua Pengumuman
+    // -------------------------------------------------------
+    public function allInformations()
+    {
+        $informations = Information::where('publish', 1)
+            ->latest()
+            ->get();
+
+        return view(
+            'user.siswa.allInformations',
+            compact('informations')
+        );
+    }
+
+    // -------------------------------------------------------
+    // SISWA — Detail Pengumuman
+    // -------------------------------------------------------
     public function showInformation($information_id)
     {
-        $information = Information::find($information_id);
-        return view('user.siswa.showInformation', compact('information'));
+        $information = Information::findOrFail($information_id);
+
+        return view(
+            'user.siswa.showInformation',
+            compact('information')
+        );
     }
 
     // -------------------------------------------------------
     // GURU
     // -------------------------------------------------------
-    public function teacher()
-    {
-        // 1. Data guru yang sedang login
-        $teacher = Teacher::find(auth()->user()->teacher->id);
+public function teacher()
+{
+    $teacher = Teacher::find(auth()->user()->teacher->id);
 
-        // 2. Nama hari ini (Senin, Selasa, dst.) — sesuai format kolom 'hari' di tabel schedules
-        $hariIni = Carbon::now()->locale('id')->isoFormat('dddd');
+    $hariIni = Carbon::now()
+        ->locale('id')
+        ->isoFormat('dddd');
 
-        // 3. Jadwal hari ini, urut jam mulai
-        $schedules = \App\Schedule::with([
-                            'classLearn.classRoom',
-                            'classLearn.subject',
-                        ])
-                        ->where('teacher_id', $teacher->id)
-                        ->where('hari', $hariIni)
-                        ->orderBy('jam_mulai')
-                        ->get();
+    // ==============================
+    // JADWAL HARI INI
+    // ==============================
+    $schedules = Schedule::with([
+            'classLearn.classRoom',
+            'classLearn.subject',
+        ])
+        ->where('teacher_id', $teacher->id)
+        ->where('hari', $hariIni)
+        ->orderBy('jam_mulai')
+        ->get();
 
-        // 4. Semua kelas unik yang diajar guru ini (lintas semester)
-        $kelasIds = \App\Schedule::where('teacher_id', $teacher->id)
-                        ->with('classLearn.classRoom')
-                        ->get()
-                        ->pluck('classLearn.classRoom.id')
-                        ->unique()
-                        ->filter();
+    // ==============================
+    // AMBIL KELAS BERDASARKAN
+    // CLASS LEARN
+    // ==============================
+    $kelasIds = Schedule::with('classLearn.classRoom')
+        ->where('teacher_id', $teacher->id)
+        ->get()
+        ->pluck('classLearn.classRoom.id')
+        ->unique()
+        ->filter();
 
-        // 5. Total siswa unik di kelas-kelas tersebut
-        $totalSiswa = \App\ClassStudent::whereIn('class_room_id', $kelasIds)
-                        ->distinct('student_id')
-                        ->count('student_id');
+    // ==============================
+    // TOTAL SISWA
+    // ==============================
+    $totalSiswa = \App\ClassStudent::whereIn(
+            'class_room_id',
+            $kelasIds
+        )
+        ->distinct('student_id')
+        ->count('student_id');
 
-        // 6. Total kelas unik yang diajar
-        $totalKelas = $kelasIds->count();
+    // ==============================
+    // TOTAL KELAS
+    // ==============================
+    $totalKelas = $kelasIds->count();
 
-        // 7. Total jadwal guru ini (semua hari/semester)
-        $totalJadwal = \App\Schedule::where('teacher_id', $teacher->id)->count();
+    // ==============================
+    // TOTAL JADWAL
+    // ==============================
+    $totalJadwal = Schedule::where(
+            'teacher_id',
+            $teacher->id
+        )
+        ->count();
 
-        return view('user.guru.dashboard', compact(
+    return view(
+        'user.guru.dashboard',
+        compact(
             'teacher',
             'schedules',
             'totalSiswa',
             'totalKelas',
             'totalJadwal'
-        ));
-    }
+        )
+    );
+}
 }

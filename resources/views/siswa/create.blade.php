@@ -14,21 +14,13 @@
          <!-- /.card-header -->
          <!-- form start -->
 
-         {{-- @php
-         $default = 1000;
-         $tahunMasuk = date('Y');
-         $nomor = $default+ 1;
-         dd($nomor);
-         $nis = $tahunMasuk;
-         @endphp --}}
-
          <form method="post" action="/students" role="form" enctype="multipart/form-data">
             @csrf
             <div class="card-body">
                <div class="form-group">
                   <label for="nis">NIS</label>
                   <input type="text" name="nis" class="form-control @error('nis') is-invalid @enderror" id="nis"
-                     placeholder="Masukkan nis" value="{{ $nisTerakhir +1 }}" readonly>
+                     placeholder="Masukkan nis" value="{{ $nisTerakhir +1 }}">
                   @error('nis') <div class="invalid-feedback">{{ $message }}</div> @enderror
                </div>
 
@@ -99,44 +91,31 @@
                <div class="form-group">
                   <label for="alamat">Alamat</label>
                   <textarea name="alamat" class="form-control @error('alamat') is-invalid @enderror" id="alamat"
-                     placeholder="Masukkan alamat">{{ old('nama') }}</textarea>
+                     placeholder="Masukkan alamat">{{ old('alamat') }}</textarea>
                   @error('alamat') <div class="invalid-feedback">{{ $message }}</div> @enderror
                </div>
 
-               {{-- <div class="form-group">
-                  <label for="class_room_id">Kelas</label>
-                  <select class="form-control custom-select @error('class_room_id') is-invalid @enderror"
-                     id="class_room_id" name="class_room_id">
-                     <option value="" selected="" disabled="">Pilih kelas</option>
-                     @foreach ($classes as $class)
-                     <option value="{{ $class->id }}" {{ old('class_room_id') == $class->id ? 'selected' : '' }}>
-               {{$class->nama}}</option>
-               @endforeach
-               </select>
-               @error('class_room_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div> --}}
-
-            <div class="form-group">
-               <label for="exampleInputFile">Foto</label>
-               <div class="input-group">
-                  <div class="custom-file">
-                     <input type="file" class="custom-file-input @error('foto') is-invalid @enderror" name="foto"
-                        id="customFile">
-                     <label class="custom-file-label" for="exampleInputFile">Pilih file</label>
+               <div class="form-group">
+                  <label for="exampleInputFile">Foto</label>
+                  <div class="input-group">
+                     <div class="custom-file">
+                        <input type="file" class="custom-file-input @error('foto') is-invalid @enderror" name="foto"
+                           id="customFile">
+                        <label class="custom-file-label" for="exampleInputFile">Pilih file</label>
+                     </div>
                   </div>
                </div>
+
             </div>
+            <!-- /.card-body -->
 
+            <div class="card-footer">
+               <button type="submit" class="btn btn-primary">Tambah Data</button>
+               <a href="/students" class="btn btn-warning">Batal</a>
+            </div>
+         </form>
       </div>
-      <!-- /.card-body -->
-
-      <div class="card-footer">
-         <button type="submit" class="btn btn-primary">Tambah Data</button>
-         <a href="/students" class="btn btn-warning">Batal</a>
-      </div>
-      </form>
    </div>
-</div>
 </div>
 
 

@@ -145,7 +145,7 @@ Route::group(['middleware' => ['auth', 'checkRole:admin']], function () {
     Route::get('/getdataschedule/{kelas_id}/{semester_id}', 'SchedulesController@getdataschedule');
     Route::get('getdatainformation', ['uses' => 'InformationsController@getdatainformation', 'as' => 'ajax.get.data.information']);
 
-    // ✅ Roles & Permissions
+    // Roles & Permissions
     Route::resource('roles', 'RolesController');
     Route::resource('permissions', 'PermissionsController');
     Route::resource('role-permission', 'RolePermissionController');
@@ -160,7 +160,10 @@ Route::group(['middleware' => ['auth', 'checkRole:admin']], function () {
 */
 Route::group(['middleware' => ['auth', 'checkRole:siswa'], 'prefix' => 'student'], function () {
     Route::get('/dashboard', 'DashboardController@student');
+
+    Route::get('/dashboard/informations', 'DashboardController@allInformations');
     Route::get('/dashboard/information/{information_id}', 'DashboardController@showInformation');
+
     Route::get('/profile', 'StudentsController@profileStudent');
     Route::get('/schedules', 'StudentsController@schedulesStudent');
     Route::get('/grades', 'StudentsController@gradesStudent');
@@ -178,17 +181,44 @@ Route::group(['middleware' => ['auth', 'checkRole:siswa'], 'prefix' => 'student'
 |--------------------------------------------------------------------------
 */
 Route::group(['middleware' => ['auth', 'checkRole:guru'], 'prefix' => 'teacher'], function () {
+
     Route::get('/dashboard', 'DashboardController@teacher');
+
     Route::get('/profile', 'TeachersController@profileTeacher');
     Route::get('/edit-profile', 'TeachersController@editProfileTeacher');
+
+    Route::put('/edit/{teacher}', 'TeachersController@updateTeacher');
+
     Route::get('/schedules', 'TeachersController@schedulesTeacher');
+
+    // NILAI
     Route::get('/grades', 'TeachersController@indexGradeTeacher');
     Route::get('/grades/{class_id}/{semester_id}/create', 'TeachersController@createGradeTeacher');
     Route::post('/grades', 'TeachersController@storeGradeTeacher');
+
+    // EDIT NILAI
+    Route::get('/grades/{grade}/edit', 'TeachersController@editGradeTeacher');
+    Route::put('/grades/{grade}', 'TeachersController@updateGradeTeacher');
+
+    // WALI KELAS
     Route::get('/homeroom-teacher', 'TeachersController@indexHomeroomTeacher');
-    Route::get('/homeroom-teacher/class/{class_id}/semester/{semester_id}', 'TeachersController@showStudentHomeroomTeacher');
-    Route::get('/homeroom-teacher/grades/class-student/{class_student_id}/semester/{semester_id}', 'TeachersController@showGradeHomeroomTeacher');
-    Route::put('/edit/{teacher}', 'TeachersController@updateTeacher');
+
+    Route::get(
+        '/homeroom-teacher/class/{class_id}/semester/{semester_id}',
+        'TeachersController@showStudentHomeroomTeacher'
+    );
+
+    Route::get(
+        '/homeroom-teacher/grades/class-student/{class_student_id}/semester/{semester_id}',
+        'TeachersController@showGradeHomeroomTeacher'
+    );
+
+    // PASSWORD
     Route::get('/changePassword', 'AuthController@showChangePasswordForm');
-    Route::post('/changePassword', 'AuthController@changePassword')->name('changePassword');
+
+    Route::post(
+        '/changePassword',
+        'AuthController@changePassword'
+    )->name('changePassword');
+
 });

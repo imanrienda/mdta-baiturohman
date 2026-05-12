@@ -31,7 +31,19 @@
                    /admin
                    @else
                    /teacher/profile
-                   @endif" class="d-block">{{ auth()->user()->name }}
+                   @endif" class="d-block">
+                    {{-- 
+                        FIX: Menggunakan kolom `nama` dari tabel relasi (students/admins/teachers)
+                        agar konsisten dengan data yang ditampilkan di masing-masing dashboard,
+                        bukan kolom `name` dari tabel users yang bisa berbeda.
+                    --}}
+                    @if(auth()->user()->role == 'siswa')
+                        {{ auth()->user()->student->nama }}
+                    @elseif(auth()->user()->role == 'admin')
+                        {{ auth()->user()->admin->nama }}
+                    @else
+                        {{ auth()->user()->teacher->nama }}
+                    @endif
                 </a>
             </div>
         </div>

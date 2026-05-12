@@ -1,56 +1,27 @@
 @extends('layouts/master')
 
-@section('title', 'Pengumuman')
-@section('header', 'Pengumuman')
+@section('title', 'Detail Pengumuman')
+@section('header', 'Detail Pengumuman')
 
 @section('content')
 
-<a href="/student/dashboard" class="btn btn-info btn-sm mb-3">Kembali</a>
+{{-- Tombol kembali ke halaman semua pengumuman --}}
+<a href="/student/dashboard/informations" class="btn btn-info btn-sm mb-3">
+    <i class="fas fa-arrow-left mr-1"></i> Kembali ke Semua Pengumuman
+</a>
+
 <div class="row">
-   <div class="col-md-12">
-      <div class="callout callout-info">
-         <h5>{{$information->judul}}</h5>
-         <span class="mailbox-read-time">{{ $information->created_at->format('d M Y') }}</span>
-
-         <p>{!!$information->konten!!}</p>
-      </div>
-   </div>
+    <div class="col-md-12">
+        <div class="callout callout-info">
+            <h5>{{ $information->judul }}</h5>
+            <span class="mailbox-read-time">
+                <i class="fas fa-clock mr-1"></i>
+                {{ $information->created_at->format('d M Y') }}
+            </span>
+            <hr>
+            <div>{!! $information->konten !!}</div>
+        </div>
+    </div>
 </div>
-@endsection
 
-@section('script')
-<script>
-   $(document).ready(function(){
-      $('#datatable').DataTable({
-         processing: true,
-         serverside: true,
-         ajax: "{{ route('ajax.get.data.information') }}",
-         columns:[
-            {data: 'DT_RowIndex', name: 'DT_RowIndex' },
-            {data: 'judul', name: 'judul'},
-            // {data: 'konten', name: 'konten'},
-            {data: 'aksi',  name: 'aksi'},
-         ]
-      })
-
-      $('#datatable').on('click', '.delete', function(e) {
-         e.preventDefault();
-         const form = $(this).attr('action');
-
-         Swal.fire({
-            title: 'Apa kamu yakin?',
-            text: "Data admin dan user ini akan hilang!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Ya, Hapus!'
-         }).then((result) => {
-            if (result.value) {
-               $('.delete').submit();
-            }
-         })
-      });
-   });
-</script>
 @endsection

@@ -3,41 +3,31 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClassLearn extends Model
 {
-    protected $fillable = ['class_room_id', 'semester_id', 'subject_id'];
-
-    // protected $with = array('schedule');
+    protected $fillable = [
+        'class_room_id',
+        'subject_id'
+    ];
 
     public function classRoom()
     {
-        return $this->BelongsTo(ClassRoom::class);
-    }
-
-    public function teacher()
-    {
-        return $this->BelongsTo(Teacher::class);
+        return $this->belongsTo(\App\ClassRoom::class);
     }
 
     public function subject()
     {
-        return $this->BelongsTo(Subject::class);
+        return $this->belongsTo(\App\Subject::class);
     }
 
-    public function semester()
+    public function schedules()
     {
-        return $this->BelongsTo(Semester::class);
+        return $this->hasMany(\App\Schedule::class);
     }
 
-    public function schedule()
+    public function grades()
     {
-        return $this->hasMany(Schedule::class);
-    }
-
-    public function grade()
-    {
-        return $this->hasMany(Grade::class);
+        return $this->hasMany(\App\Grade::class);
     }
 }

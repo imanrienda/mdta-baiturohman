@@ -3,30 +3,42 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class Schedule extends Model
 {
-    // protected $with = array('classlearn');
-    protected $fillable = ['hari', 'jam_mulai', 'jam_selesai', 'class_room_id', 'class_learn_id', 'semester_id', 'teacher_id'];
+    protected $fillable = [
+        'hari',
+        'jam_mulai',
+        'jam_selesai',
+        'class_learn_id',
+        'class_room_id',
+        'subject_id',
+        'semester_id',
+        'teacher_id'
+    ];
 
     public function classLearn()
     {
-        return $this->belongsTo(ClassLearn::class);
+        return $this->belongsTo(\App\ClassLearn::class, 'class_learn_id');
+    }
+
+    public function classRoom()
+    {
+        return $this->belongsTo(\App\ClassRoom::class);
+    }
+
+    public function subject()
+    {
+        return $this->belongsTo(\App\Subject::class);
     }
 
     public function teacher()
     {
-        return $this->belongsTo(Teacher::class);
+        return $this->belongsTo(\App\Teacher::class);
     }
 
     public function semester()
     {
-        return $this->belongsTo(Semester::class);
+        return $this->belongsTo(\App\Semester::class);
     }
-
-    // public function grade()
-    // {
-    //     return $this->belongsTo(Grade::class);
-    // }
 }

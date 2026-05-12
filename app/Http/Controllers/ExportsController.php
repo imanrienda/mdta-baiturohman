@@ -3,86 +3,191 @@
 namespace App\Http\Controllers;
 
 use App\Student;
+use App\Grade;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use PDF;
 
 class ExportsController extends Controller
 {
+    // =========================================================
+    // EXPORT DATA SISWA
+    // =========================================================
     public function exportSiswaPDF()
     {
         $students = Student::all();
-        $pdf = PDF::loadView('export.siswapdf', compact('students'));
+
+        $pdf = PDF::loadView(
+            'export.siswapdf',
+            compact('students')
+        );
+
         return $pdf->download('siswa.pdf');
     }
 
+    // =========================================================
+    // EXPORT JADWAL
+    // =========================================================
     public function exportJadwalPDF($kelas, $semester)
     {
-        $schedule = \App\Schedule::where('class_room_id', '=', $kelas)->where('semester_id', '=', $semester)->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu')")->get();
+        $schedule = \App\Schedule::where(
+                'class_room_id',
+                $kelas
+            )
+            ->where(
+                'semester_id',
+                $semester
+            )
+            ->orderByRaw("
+                FIELD(
+                    hari,
+                    'Senin',
+                    'Selasa',
+                    'Rabu',
+                    'Kamis',
+                    'Jumat',
+                    'Sabtu'
+                )
+            ")
+            ->get();
 
-        $pdf = PDF::loadView('export.jadwalpdf', compact('schedule'));
+        $pdf = PDF::loadView(
+            'export.jadwalpdf',
+            compact('schedule')
+        );
+
         return $pdf->download('jadwal.pdf');
     }
 
+    // =========================================================
+    // EXPORT NILAI ADMIN
+    // =========================================================
     public function exportNilaiPDF($kelas, $semester)
     {
-        $grades = \App\Grade::where('class_room_id', $kelas)->where('semester_id', $semester)->get();
-        $grades->map(function ($grade) {
-            $jmltugas = $grade->nilai_tugas_1 + $grade->nilai_tugas_2;
-            $rata2tugas = $jmltugas / 2;
+        $grades = Grade::with([
+                'classStudent.student',
+                'classStudent.classRoom',
+                'subject',
+                'semester',
+            ])
 
-            $tugas = $rata2tugas * 0.25;
-            $uts = $grade->nilai_uts * 0.35;
-            $uas = $grade->nilai_uas * 0.40;
-            $rata2 = $tugas + $uts + $uas;
-            $grade->rata2 = $rata2;
+            ->whereHas('classStudent', function ($query) use ($kelas) {
+
+                $query->where(
+                    'class_room_id',
+                    $kelas
+                );
+            })
+
+            ->where(
+                'semester_id',
+                $semester
+            )
+
+            ->get();
+
+        $grades->map(function ($grade) {
+
+            $rata2tugas = (
+                ($grade->nilai_tugas_1 ?? 0) +
+                ($grade->nilai_tugas_2 ?? 0)
+            ) / 2;
+
+            $grade->rata2 =
+                ($rata2tugas * 0.25) +
+                (($grade->nilai_uts ?? 0) * 0.35) +
+                (($grade->nilai_uas ?? 0) * 0.40);
+
             return $grade;
         });
 
-        $pdf = PDF::loadView('export.nilaipdf', compact('grades'));
+        $pdf = PDF::loadView(
+            'export.nilaipdf',
+            compact('grades')
+        );
+
         return $pdf->download('nilai.pdf');
     }
 
+    // =========================================================
+    // EXPORT NILAI SISWA
+    // =========================================================
     public function exportNilaiSiswaPDF($kelas, $semester)
     {
-        $student = \App\ClassStudent::find($kelas);
-        // $class_room_id = $student->class_room_id;
+        $studentId = auth()->user()->student->id;
 
-        $nilai = DB::table('class_learns')
-            ->leftJoin('subjects', 'subjects.id', '=', 'class_learns.subject_id')
-            ->select('class_learns.*', 'grades.*', 'grades.class_learn_id', 'subjects.nama')
-            ->leftJoin('grades', function ($leftJoin) use ($kelas, $semester) {
-                $leftJoin->on('grades.class_learn_id', '=', 'class_learns.id');
-                // $leftJoin->where('grades.class_room_id', '=', $class_room_id);
-                $leftJoin->where('grades.semester_id', '=', $semester);
-                $leftJoin->where('grades.class_student_id', '=', $kelas);
-            })->get();
+        $student = \App\ClassStudent::with([
+                'student',
+                'classRoom'
+            ])
+            ->findOrFail($kelas);
 
-        $nilai->map(function ($n) {
-            $jmltugas = $n->nilai_tugas_1 + $n->nilai_tugas_2;
-            $rata2tugas = $jmltugas / 2;
+        $grades = Grade::with([
+                'subject',
+                'semester',
+                'classStudent.student',
+                'classStudent.classRoom',
+            ])
 
-            $tugas = $rata2tugas * 0.25;
-            $uts = $n->nilai_uts * 0.35;
-            $uas = $n->nilai_uas * 0.40;
-            $rata2 = $tugas + $uts + $uas;
+            ->where(
+                'student_id',
+                $studentId
+            )
 
-            $n->rata2 = $rata2;
+            ->where(
+                'class_student_id',
+                $kelas
+            )
 
-            return $n;
+            ->where(
+                'semester_id',
+                $semester
+            )
+
+            ->get();
+
+        $grades->map(function ($grade) {
+
+            $rata2tugas = (
+                ($grade->nilai_tugas_1 ?? 0) +
+                ($grade->nilai_tugas_2 ?? 0)
+            ) / 2;
+
+            $grade->rata2 =
+                ($rata2tugas * 0.25) +
+                (($grade->nilai_uts ?? 0) * 0.35) +
+                (($grade->nilai_uas ?? 0) * 0.40);
+
+            return $grade;
         });
 
         $sum = 0;
         $hitung = 0;
-        foreach ($nilai->unique('subject_id') as $n) {
-            $sum += $n->rata2;
-            if ($n->rata2 != null) {
+
+        foreach ($grades as $grade) {
+
+            $sum += $grade->rata2;
+
+            if ($grade->rata2 > 0) {
                 $hitung++;
             }
         }
-        $total = $hitung == 0 ? 0 : ($sum / $hitung);
 
-        $pdf = PDF::loadView('export.nilai_siswa_pdf', compact('nilai', 'student', 'semester', 'total'));
+        $total = $hitung > 0
+            ? round($sum / $hitung, 2)
+            : 0;
+
+        $semesterData = \App\Semester::find($semester);
+
+        $pdf = PDF::loadView(
+            'export.nilai_siswa_pdf',
+            [
+                'grades'   => $grades,
+                'student'  => $student,
+                'semester' => $semesterData,
+                'total'    => $total,
+            ]
+        );
+
         return $pdf->download('nilai-siswa.pdf');
     }
 }
