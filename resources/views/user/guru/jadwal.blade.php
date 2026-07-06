@@ -62,9 +62,10 @@
 
             <div class="card-body">
 
-               <a href="#" class="btn btn-info btn-sm mb-3">
-                  Export PDF
-               </a>
+               <a href="/teacher/export-jadwal/{{ $_GET['semester'] }}"
+   class="btn btn-info btn-sm mb-3">
+   Export PDF
+</a>
 
                <table class="table table-bordered table-hover" id="datatable">
 

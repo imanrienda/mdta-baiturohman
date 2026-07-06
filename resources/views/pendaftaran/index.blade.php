@@ -20,6 +20,7 @@
                     <th>NISN</th>
                     <th>Kelas Tujuan</th>
                     <th>Asal Sekolah</th>
+                    <th>Semester</th>
                     <th>No. HP Ortu</th>
                     <th>Status</th>
                     <th>Tgl Daftar</th>
@@ -34,6 +35,13 @@
                     <td>{{ $item->nisn ?? '-' }}</td>
                     <td>{{ $item->kelas_tujuan }}</td>
                     <td>{{ $item->asal_sekolah ?? '-' }}</td>
+                    <td>
+                        @if($item->semester)
+                            {{ $item->semester->tahun_ajaran }} - {{ $item->semester->semester }}
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>{{ $item->no_hp_ortu }}</td>
                     <td>
                         @if($item->status == 'pending')
@@ -75,7 +83,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-3">
+                    <td colspan="10" class="text-center text-muted py-3">
                         Belum ada data pendaftaran
                     </td>
                 </tr>

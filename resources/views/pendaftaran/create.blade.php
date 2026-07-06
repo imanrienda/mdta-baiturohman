@@ -158,42 +158,60 @@
                 </div>
             </div>
 
-            {{-- DATA SEKOLAH --}}
-            <h5 class="mb-3 mt-4 text-muted border-bottom pb-2">
-                <i class="fas fa-school mr-1"></i> Data Sekolah
-            </h5>
+{{-- Ganti seluruh bagian Data Sekolah --}}
+<h5 class="mb-3 mt-4 text-muted border-bottom pb-2">
+    <i class="fas fa-school mr-1"></i> Data Sekolah
+</h5>
 
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label">Asal Sekolah</label>
-                <div class="col-sm-9">
-                    <input type="text" name="asal_sekolah"
-                        class="form-control"
-                        value="{{ old('asal_sekolah') }}"
-                        placeholder="Nama sekolah asal (opsional)">
-                </div>
-            </div>
+<div class="form-group row">
+    <label class="col-sm-3 col-form-label">Asal Sekolah</label>
+    <div class="col-sm-9">
+        <input type="text" name="asal_sekolah"
+            class="form-control"
+            value="{{ old('asal_sekolah') }}"
+            placeholder="Nama sekolah asal (opsional)">
+    </div>
+</div>
 
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label">
-                    Kelas Tujuan <span class="text-danger">*</span>
-                </label>
-                <div class="col-sm-9">
-                    <select name="kelas_tujuan"
-                        class="form-control @error('kelas_tujuan') is-invalid @enderror">
-                        <option value="">-- Pilih Kelas --</option>
-                        <option value="Kelas 1" {{ old('kelas_tujuan') == 'Kelas 1' ? 'selected' : '' }}>Kelas 1</option>
-                        <option value="Kelas 2" {{ old('kelas_tujuan') == 'Kelas 2' ? 'selected' : '' }}>Kelas 2</option>
-                        <option value="Kelas 3" {{ old('kelas_tujuan') == 'Kelas 3' ? 'selected' : '' }}>Kelas 3</option>
-                        <option value="Kelas 4" {{ old('kelas_tujuan') == 'Kelas 4' ? 'selected' : '' }}>Kelas 4</option>
-                        <option value="Kelas 5" {{ old('kelas_tujuan') == 'Kelas 5' ? 'selected' : '' }}>Kelas 5</option>
-                        <option value="Kelas 6" {{ old('kelas_tujuan') == 'Kelas 6' ? 'selected' : '' }}>Kelas 6</option>
-                    </select>
-                    @error('kelas_tujuan')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-            </div>
+<div class="form-group row">
+    <label class="col-sm-3 col-form-label">
+        Kelas Tujuan <span class="text-danger">*</span>
+    </label>
+    <div class="col-sm-9">
+        <select name="kelas_tujuan"
+            class="form-control @error('kelas_tujuan') is-invalid @enderror">
+            <option value="">-- Pilih Kelas --</option>
+            <option value="Kelas 1" {{ old('kelas_tujuan') == 'Kelas 1' ? 'selected' : '' }}>Kelas 1</option>
+            <option value="Kelas 2" {{ old('kelas_tujuan') == 'Kelas 2' ? 'selected' : '' }}>Kelas 2</option>
+            <option value="Kelas 3" {{ old('kelas_tujuan') == 'Kelas 3' ? 'selected' : '' }}>Kelas 3</option>
+            <option value="Kelas 4" {{ old('kelas_tujuan') == 'Kelas 4' ? 'selected' : '' }}>Kelas 4</option>
+        </select>
+        @error('kelas_tujuan')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
 
+{{-- FIELD BARU: Semester --}}
+<div class="form-group row">
+    <label class="col-sm-3 col-form-label">
+        Semester <span class="text-danger">*</span>
+    </label>
+    <div class="col-sm-9">
+        <select name="semester_id"
+            class="form-control @error('semester_id') is-invalid @enderror">
+            <option value="">-- Pilih Semester --</option>
+            @foreach($semesters as $semester)
+                <option value="{{ $semester->id }}" {{ old('semester_id') == $semester->id ? 'selected' : '' }}>
+                    {{ $semester->tahun_ajaran }} - {{ $semester->semester }}
+                </option>
+            @endforeach
+        </select>
+        @error('semester_id')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
             {{-- UPLOAD DOKUMEN --}}
             <h5 class="mb-3 mt-4 text-muted border-bottom pb-2">
                 <i class="fas fa-file-upload mr-1"></i> Upload Dokumen

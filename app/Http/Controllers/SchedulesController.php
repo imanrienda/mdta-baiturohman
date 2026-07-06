@@ -117,31 +117,31 @@ class SchedulesController extends Controller
     {
         $semester     = \App\Semester::find($schedule->semester_id);
         $classStudent = \App\ClassStudent::where('class_room_id', $schedule->class_room_id)->first();
+        $subjects     = \App\Subject::orderBy('nama')->get();
 
-        $subjects = \App\Subject::orderBy('nama')->get();
+        // ✅ PERBAIKAN: kirim $classLearns ke view agar dropdown mata pelajaran bisa tampil
+        $classLearns  = ClassLearn::where('class_room_id', $schedule->class_room_id)->get();
 
-        return view('jadwal.edit', compact('schedule', 'subjects', 'semester', 'classStudent'));
+        return view('jadwal.edit', compact('schedule', 'subjects', 'semester', 'classStudent', 'classLearns'));
     }
 
     public function update(Request $request, Schedule $schedule)
     {
         $request->validate(
             [
-                'hari'         => 'required',
-                'jam_mulai'    => 'required',
-                'jam_selesai'  => 'required',
-                'subject_id'   => 'required',
-                'teacher_id'   => 'required',
+                'hari'           => 'required',
+                'jam_mulai'      => 'required',
+                'jam_selesai'    => 'required',
+                'class_learn_id' => 'required',
+                'teacher_id'     => 'required',
             ],
             [
                 'required' => 'field ini wajib diisi',
             ]
         );
 
-        // Cari class learn baru
-        $classLearn = ClassLearn::where('class_room_id', $schedule->class_room_id)
-            ->where('subject_id', $request->subject_id)
-            ->first();
+        // Ambil class_learn berdasarkan pilihan user di form
+        $classLearn = ClassLearn::find($request->class_learn_id);
 
         if (!$classLearn) {
             return redirect('schedules/' . $schedule->id . '/edit')
@@ -189,7 +189,7 @@ class SchedulesController extends Controller
                 'jam_mulai'       => $request->jam_mulai,
                 'jam_selesai'     => $request->jam_selesai,
                 'class_learn_id'  => $classLearn->id,
-                'subject_id'      => $request->subject_id,
+                'subject_id'      => $classLearn->subject_id,
                 'teacher_id'      => $request->teacher_id,
             ]);
 

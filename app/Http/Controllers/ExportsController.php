@@ -12,17 +12,18 @@ class ExportsController extends Controller
     // =========================================================
     // EXPORT DATA SISWA
     // =========================================================
-    public function exportSiswaPDF()
+    public function exportSiswaPDF(Request $request)
     {
-        $students = Student::all();
+        $semester = \App\Semester::findOrFail($request->semester_id);
 
-        $pdf = PDF::loadView(
-            'export.siswapdf',
-            compact('students')
-        );
+        $students = Student::whereHas('classStudent', function ($q) use ($semester) {
+            $q->where('semester_id', $semester->id);
+        })->get();
 
-        return $pdf->download('siswa.pdf');
+        $pdf = PDF::loadView('export.siswapdf', compact('students', 'semester'));
+        return $pdf->download('data-siswa-' . $semester->tahun_ajaran . '-' . $semester->semester . '.pdf');
     }
+
 
     // =========================================================
     // EXPORT JADWAL
@@ -56,6 +57,42 @@ class ExportsController extends Controller
         );
 
         return $pdf->download('jadwal.pdf');
+    }
+
+    public function exportJadwalGuruPDF($semester)
+    {
+        $teacher = \App\Teacher::where(
+            'user_id',
+            auth()->user()->id
+        )->first();
+
+        $schedule = \App\Schedule::with([
+            'teacher',
+            'subject',
+            'semester',
+            'classRoom'
+        ])
+        ->where('teacher_id', $teacher->id)
+        ->where('semester_id', $semester)
+        ->orderByRaw("
+            FIELD(
+                hari,
+                'Senin',
+                'Selasa',
+                'Rabu',
+                'Kamis',
+                'Jumat',
+                'Sabtu'
+            )
+        ")
+        ->get();
+
+        $pdf = PDF::loadView(
+            'export.jadwal_guru_pdf',
+            compact('schedule')
+        );
+
+        return $pdf->download('jadwal_guru.pdf');
     }
 
     // =========================================================
@@ -119,7 +156,9 @@ class ExportsController extends Controller
                 'student',
                 'classRoom'
             ])
-            ->findOrFail($kelas);
+            ->where('class_room_id', $kelas)
+            ->where('student_id', $studentId)
+            ->firstOrFail();
 
         $grades = Grade::with([
                 'subject',
@@ -127,23 +166,21 @@ class ExportsController extends Controller
                 'classStudent.student',
                 'classStudent.classRoom',
             ])
-
-            ->where(
-                'student_id',
-                $studentId
-            )
-
-            ->where(
-                'class_student_id',
-                $kelas
-            )
-
-            ->where(
-                'semester_id',
-                $semester
-            )
-
+            ->where('class_student_id', $student->id)
+            ->where('semester_id', $semester)
             ->get();
+
+        if ($grades->isEmpty()) {
+            $grades = Grade::with([
+                    'subject',
+                    'semester',
+                    'classStudent.student',
+                    'classStudent.classRoom',
+                ])
+                ->where('student_id', $studentId)
+                ->where('semester_id', $semester)
+                ->get();
+        }
 
         $grades->map(function ($grade) {
 
@@ -160,7 +197,7 @@ class ExportsController extends Controller
             return $grade;
         });
 
-        $sum = 0;
+        $sum    = 0;
         $hitung = 0;
 
         foreach ($grades as $grade) {

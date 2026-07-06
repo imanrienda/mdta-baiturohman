@@ -183,7 +183,10 @@ Route::group(['middleware' => ['auth', 'checkRole:siswa'], 'prefix' => 'student'
 Route::group(['middleware' => ['auth', 'checkRole:guru'], 'prefix' => 'teacher'], function () {
 
     Route::get('/dashboard', 'DashboardController@teacher');
-
+    Route::get(
+    '/export-jadwal/{semester}',
+    'ExportsController@exportJadwalGuruPDF'
+);
     Route::get('/profile', 'TeachersController@profileTeacher');
     Route::get('/edit-profile', 'TeachersController@editProfileTeacher');
 
